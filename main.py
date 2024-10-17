@@ -1,11 +1,25 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import JSONResponse
+import os
 
 app = FastAPI()
 
-@app.get("/")
-async def read_root():
-    return {"message": "¡Hola, mundo! Este es un servidor FastAPI."}
+@app.post("/convertir")
+async def convertir(file: UploadFile = File(...)):
+    if not file:
+        return JSONResponse(content={"message": "No file uploaded"}, status_code=400)
 
-@app.get("/convert")
-async def convert_image():
-    return {"message": "Aquí es donde convertirías tu imagen a 3D."}
+    # Guarda la imagen en el sistema de archivos
+    file_location = f"temp/{file.filename}"  # Asegúrate de crear la carpeta 'temp'
+    with open(file_location, "wb") as buffer:
+        buffer.write(await file.read())
+    
+    # Aquí debes agregar tu lógica para convertir la imagen en 3D usando Blender
+    # Por ahora solo devolveremos un mensaje de éxito
+    return JSONResponse(content={"message": "Imagen convertida", "file_location": file_location}, status_code=200)
+
+if __name__ == '__main__':
+    import uvicorn
+    # Crea la carpeta temp si no existe
+    os.makedirs("temp", exist_ok=True)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
